@@ -1,0 +1,256 @@
+# =========================================
+# GOOGLE STOCK PRICE PREDICTION USING RNN
+# =========================================
+
+# -------- IMPORTS --------
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.preprocessing import MinMaxScaler
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN, Dense
+
+# =========================================
+# LOAD DATASET
+# =========================================
+
+dataset = pd.read_csv("googl_data_2020_2025.csv")
+
+# =========================================
+# CLEAN OPEN COLUMN
+# =========================================
+
+dataset['Open'] = dataset['Open'].replace(
+    '[\\$,]',
+    '',
+    regex=True
+)
+
+dataset['Open'] = pd.to_numeric(
+    dataset['Open'],
+    errors='coerce'
+)
+
+dataset = dataset.dropna()
+
+# =========================================
+# SELECT OPEN COLUMN
+# =========================================
+
+training_set = dataset[['Open']].values
+
+# =========================================
+# NORMALIZE DATA
+# =========================================
+
+sc = MinMaxScaler(feature_range=(0,1))
+
+training_set = sc.fit_transform(training_set)
+
+# =========================================
+# CREATE X_train AND y_train
+# =========================================
+
+X_train = []
+y_train = []
+
+for i in range(60, len(training_set)):
+
+    X_train.append(
+        training_set[i-60:i, 0]
+    )
+
+    y_train.append(
+        training_set[i, 0]
+    )
+
+X_train = np.array(X_train)
+y_train = np.array(y_train)
+
+# =========================================
+# RESHAPE FOR RNN
+# =========================================
+
+X_train = np.reshape(
+    X_train,
+    (X_train.shape[0], X_train.shape[1], 1)
+)
+
+# =========================================
+# BUILD RNN MODEL
+# =========================================
+
+model = Sequential()
+
+model.add(
+    SimpleRNN(
+        units=50,
+        activation='tanh',
+        input_shape=(X_train.shape[1],1)
+    )
+)
+
+model.add(Dense(1))
+
+# =========================================
+# COMPILE MODEL
+# =========================================
+
+model.compile(
+    optimizer='adam',
+    loss='mean_squared_error'
+)
+
+# =========================================
+# TRAIN MODEL
+# =========================================
+
+history = model.fit(
+    X_train,
+    y_train,
+    epochs=20,
+    batch_size=32
+)
+
+# =========================================
+# TEST DATA
+# =========================================
+
+test_dataset = pd.read_csv(
+    "googl_data_2020_2025.csv"
+)
+
+# =========================================
+# CLEAN TEST DATA
+# =========================================
+
+test_dataset['Open'] = test_dataset['Open'].replace(
+    '[\\$,]',
+    '',
+    regex=True
+)
+
+test_dataset['Open'] = pd.to_numeric(
+    test_dataset['Open'],
+    errors='coerce'
+)
+
+test_dataset = test_dataset.dropna()
+
+real_stock_price = test_dataset[['Open']].values
+
+# =========================================
+# PREPARE INPUT DATA
+# =========================================
+
+dataset_total = pd.concat(
+    (dataset['Open'], test_dataset['Open']),
+    axis=0
+)
+
+inputs = dataset_total[
+    len(dataset_total)-len(test_dataset)-60:
+].values
+
+inputs = inputs.reshape(-1,1)
+
+inputs = sc.transform(inputs)
+
+# =========================================
+# CREATE X_test
+# =========================================
+
+X_test = []
+
+for i in range(60, 80):
+
+    X_test.append(
+        inputs[i-60:i, 0]
+    )
+
+X_test = np.array(X_test)
+
+X_test = np.reshape(
+    X_test,
+    (X_test.shape[0], X_test.shape[1], 1)
+)
+
+# =========================================
+# PREDICT STOCK PRICE
+# =========================================
+
+predicted_stock_price = model.predict(X_test)
+
+predicted_stock_price = sc.inverse_transform(
+    predicted_stock_price
+)
+
+# =========================================
+# REAL VS PREDICTED GRAPH
+# =========================================
+
+plt.figure(figsize=(10,5))
+
+plt.plot(
+    real_stock_price,
+    label='Real Stock Price'
+)
+
+plt.plot(
+    predicted_stock_price,
+    label='Predicted Stock Price'
+)
+
+plt.title('Google Stock Price Prediction')
+
+plt.xlabel('Time')
+plt.ylabel('Stock Price')
+
+plt.legend()
+
+plt.show()
+
+# =========================================
+# LOSS GRAPH
+# =========================================
+
+plt.figure(figsize=(6,4))
+
+plt.plot(history.history['loss'])
+
+plt.title('Training Loss Graph')
+
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+
+plt.show()
+# =========================================
+# PREDICTION EXAMPLE
+# =========================================
+
+print("\nFirst Predicted Price:",
+      predicted_stock_price[0][0])
+
+print("First Real Price:",
+      real_stock_price[0][0])
+
+# =========================================
+# ACCURACY
+# =========================================
+
+error = np.mean(
+    np.abs(
+        real_stock_price[:20] -
+        predicted_stock_price
+    )
+)
+
+accuracy = 100 - (
+    error / np.mean(real_stock_price[:20]) * 100
+)
+
+print("\nModel Accuracy: ",
+      round(accuracy,2),
+      "%")

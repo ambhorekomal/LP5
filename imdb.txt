@@ -1,0 +1,207 @@
+# ====================================================
+# IMDB SENTIMENT ANALYSIS USING DNN
+# ====================================================
+
+# ================= IMPORTS =================
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from wordcloud import WordCloud
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import confusion_matrix, classification_report
+
+from tensorflow.keras import models, layers
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+
+
+# ================= LOAD DATA =================
+
+df = pd.read_csv(
+    "IMDB.csv",
+    encoding='latin-1',
+    engine='python',
+    on_bad_lines='skip'
+)
+
+print(df.head())
+
+
+# ================= LABEL ENCODING =================
+
+df['sentiment'] = LabelEncoder().fit_transform(df['sentiment'])
+
+# positive = 1
+# negative = 0
+
+
+# ================= SENTIMENT COUNT GRAPH =================
+
+sns.countplot(x=df['sentiment'])
+plt.title("Positive vs Negative Reviews")
+plt.show()
+
+
+# ================= WORD CLOUD =================
+
+text = " ".join(df['review'].astype(str))
+
+wc = WordCloud(
+    width=800,
+    height=400,
+    background_color='white'
+).generate(text)
+
+plt.figure(figsize=(10,5))
+plt.imshow(wc)
+plt.axis("off")
+plt.title("Word Cloud")
+plt.show()
+
+
+# ================= INPUT AND OUTPUT =================
+
+X = df['review']
+y = df['sentiment']
+
+
+# ================= TRAIN TEST SPLIT =================
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.2,
+    random_state=42
+)
+
+
+# ================= TOKENIZATION =================
+
+tokenizer = Tokenizer(num_words=10000)
+
+tokenizer.fit_on_texts(X_train)
+
+X_train = tokenizer.texts_to_sequences(X_train)
+X_test = tokenizer.texts_to_sequences(X_test)
+
+
+# ================= PADDING =================
+
+X_train = pad_sequences(X_train, maxlen=200)
+X_test = pad_sequences(X_test, maxlen=200)
+
+
+# ================= BUILD DNN MODEL =================
+
+model = models.Sequential([
+
+    layers.Embedding(10000, 64),
+
+    layers.GlobalAveragePooling1D(),
+
+    layers.Dense(64, activation='relu'),
+
+    layers.Dropout(0.3),
+
+    layers.Dense(1, activation='sigmoid')
+
+])
+
+
+# ================= COMPILE MODEL =================
+
+model.compile(
+    optimizer='adam',
+    loss='binary_crossentropy',
+    metrics=['accuracy']
+)
+
+
+# ================= TRAIN MODEL =================
+
+history = model.fit(
+    X_train,
+    y_train,
+    epochs=5,
+    batch_size=128,
+    validation_split=0.2
+)
+
+
+# ================= ACCURACY GRAPH =================
+
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+
+plt.title("Accuracy Graph")
+plt.xlabel("Epoch")
+plt.ylabel("Accuracy")
+
+plt.legend(['Train', 'Validation'])
+
+plt.show()
+
+
+# ================= LOSS GRAPH =================
+
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+
+plt.title("Loss Graph")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+
+plt.legend(['Train', 'Validation'])
+
+plt.show()
+
+
+# ================= EVALUATION =================
+
+loss, acc = model.evaluate(X_test, y_test)
+
+print("\nAccuracy:", acc)
+
+
+# ================= PREDICTIONS =================
+
+y_pred = model.predict(X_test)
+
+y_pred = (y_pred > 0.5).astype(int)
+
+
+# ================= CLASSIFICATION REPORT =================
+
+print(classification_report(y_test, y_pred))
+
+
+# ================= CONFUSION MATRIX =================
+
+cm = confusion_matrix(y_test, y_pred)
+
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+
+plt.show()
+
+
+# ================= SAMPLE PREDICTION =================
+
+review = ["This movie was fantastic and emotional"]
+
+review = tokenizer.texts_to_sequences(review)
+
+review = pad_sequences(review, maxlen=200)
+
+pred = model.predict(review)
+
+if pred > 0.5:
+    print("\nPositive Review")
+else:
+    print("\nNegative Review")

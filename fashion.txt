@@ -1,0 +1,240 @@
+# Fashion MNIST Classifier (Easy Version)
+
+
+# =============================
+# FASHION MNIST CLASSIFIER
+# =============================
+
+
+# -------- IMPORTS --------
+import matplotlib.pyplot as plt
+from tensorflow.keras.datasets import fashion_mnist
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Flatten
+from tensorflow.keras.utils import to_categorical
+
+# -------- LOAD DATA --------
+(x_train, y_train), (x_test, y_test) = fashion_mnist.load_data()
+
+# -------- NORMALIZE --------
+x_train = x_train / 255.0
+x_test = x_test / 255.0
+
+# -------- CLASS NAMES --------
+classes = [
+    'T-shirt', 'Trouser', 'Pullover', 'Dress', 'Coat',
+    'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle Boot'
+]
+
+# -------- SHOW SAMPLE IMAGES --------
+plt.figure(figsize=(10,5))
+
+for i in range(10):
+    plt.subplot(2,5,i+1)
+    plt.imshow(x_train[i], cmap='gray')
+    plt.title(classes[y_train[i]])
+    plt.axis('off')
+
+plt.tight_layout()
+plt.show()
+
+# -------- ONE HOT ENCODING --------
+y_train = to_categorical(y_train, 10)
+y_test = to_categorical(y_test, 10)
+
+# -------- BUILD MODEL --------
+model = Sequential([
+    Flatten(input_shape=(28,28)),
+    Dense(128, activation='relu'),
+    Dense(10, activation='softmax')
+])
+
+# -------- COMPILE MODEL --------
+model.compile(
+    optimizer='adam',
+    loss='categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+# -------- TRAIN MODEL --------
+history = model.fit(
+    x_train,
+    y_train,
+    epochs=10,
+    validation_data=(x_test, y_test)
+)
+
+# -------- TEST ACCURACY --------
+loss, accuracy = model.evaluate(x_test, y_test)
+
+print("\nTest Accuracy:", accuracy)
+
+# =============================
+# GRAPHS
+# =============================
+
+# -------- ACCURACY GRAPH --------
+plt.figure(figsize=(6,4))
+
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+
+plt.title('Accuracy Graph')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
+
+# -------- LOSS GRAPH --------
+plt.figure(figsize=(6,4))
+
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+
+plt.title('Loss Graph')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
+
+# =============================
+# PREDICTION
+# =============================
+
+prediction = model.predict(x_test)
+
+# First image prediction
+predicted_class = prediction[0].argmax()
+
+plt.imshow(x_test[0], cmap='gray')
+plt.title('Predicted: ' + classes[predicted_class])
+plt.axis('off')
+plt.show()
+
+
+
+# =============================
+# FASHION MNIST CLASSIFIER
+# =============================
+
+# -------- IMPORTS --------
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Flatten
+from tensorflow.keras.utils import to_categorical
+
+# -------- LOAD DOWNLOADED DATASET --------
+train = pd.read_csv("fashion-mnist_train.csv")
+test = pd.read_csv("fashion-mnist_test.csv")
+
+# -------- FEATURES AND LABELS --------
+x_train = train.iloc[:,1:].values
+y_train = train.iloc[:,0].values
+
+x_test = test.iloc[:,1:].values
+y_test = test.iloc[:,0].values
+
+# -------- RESHAPE --------
+x_train = x_train.reshape(-1,28,28)
+x_test = x_test.reshape(-1,28,28)
+
+# -------- NORMALIZE --------
+x_train = x_train / 255.0
+x_test = x_test / 255.0
+
+# -------- CLASS NAMES --------
+classes = [
+    'T-shirt', 'Trouser', 'Pullover', 'Dress', 'Coat',
+    'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle Boot'
+]
+
+# -------- SHOW SAMPLE IMAGES --------
+plt.figure(figsize=(10,5))
+
+for i in range(10):
+    plt.subplot(2,5,i+1)
+    plt.imshow(x_train[i], cmap='gray')
+    plt.title(classes[y_train[i]])
+    plt.axis('off')
+
+plt.tight_layout()
+plt.show()
+
+# -------- ONE HOT ENCODING --------
+y_train = to_categorical(y_train, 10)
+y_test = to_categorical(y_test, 10)
+
+# -------- BUILD MODEL --------
+model = Sequential([
+    Flatten(input_shape=(28,28)),
+    Dense(128, activation='relu'),
+    Dense(10, activation='softmax')
+])
+
+# -------- COMPILE MODEL --------
+model.compile(
+    optimizer='adam',
+    loss='categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+# -------- TRAIN MODEL --------
+history = model.fit(
+    x_train,
+    y_train,
+    epochs=10,
+    validation_data=(x_test, y_test)
+)
+
+# -------- TEST ACCURACY --------
+loss, accuracy = model.evaluate(x_test, y_test)
+
+print("\nTest Accuracy:", accuracy)
+
+# =============================
+# ACCURACY GRAPH
+# =============================
+
+plt.figure(figsize=(6,4))
+
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+
+plt.title('Accuracy Graph')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+
+plt.show()
+
+# =============================
+# LOSS GRAPH
+# =============================
+
+plt.figure(figsize=(6,4))
+
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+
+plt.title('Loss Graph')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+
+plt.show()
+
+# =============================
+# PREDICTION
+# =============================
+
+prediction = model.predict(x_test)
+
+predicted_class = prediction[0].argmax()
+
+plt.imshow(x_test[0], cmap='gray')
+plt.title('Predicted: ' + classes[predicted_class])
+plt.axis('off')
+
+plt.show()

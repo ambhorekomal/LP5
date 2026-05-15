@@ -1,0 +1,61 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Read CSV file
+df = pd.read_csv("2_bubble_sort.csv")
+
+# Plot Sequential vs Parallel Time
+plt.figure(figsize=(8,5))
+
+plt.plot(
+    df['size'],
+    df['seq_time'],
+    marker='o',
+    label='Sequential Time'
+)
+
+plt.plot(
+    df['size'],
+    df['par_time'],
+    marker='s',
+    label='Parallel Time'
+)
+
+# Labels and Title
+plt.xlabel("Input Size")
+plt.ylabel("Execution Time (seconds)")
+plt.title("Sequential vs Parallel Execution Time")
+
+# Grid and Legend
+plt.grid(True)
+plt.legend()
+
+# Show plot
+plt.show()
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Read CSV file
+df = pd.read_csv("2_bubble_sort.csv")
+
+# Plot Speedup
+plt.figure(figsize=(8,5))
+
+plt.plot(
+    df['size'],
+    df['speedup'],
+    marker='o'
+)
+
+# Labels and Title
+plt.xlabel("Input Size")
+plt.ylabel("Speedup")
+plt.title("Speedup vs Input Size")
+
+# Grid
+plt.grid(True)
+
+# Show plot
+plt.show()
+
